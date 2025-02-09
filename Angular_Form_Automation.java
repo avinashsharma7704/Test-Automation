@@ -68,5 +68,6 @@ public class Angular_Form_Automation {
 		String message = driver.findElement(By.xpath("//div[@class='alert alert-success alert-dismissible']"))
 				.getText();
 		System.out.println(message);
+		driver.quit();
 	}
 }
