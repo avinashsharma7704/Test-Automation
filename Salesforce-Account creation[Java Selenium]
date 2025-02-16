@@ -1,0 +1,140 @@
+import java.time.Duration;
+import java.util.Base64;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Function;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import net.jodah.failsafe.internal.util.Assert;
+
+public class Salesforce {
+	static String Object = "Accounts"; // Note: this global static variable for navigating to any object in UI from
+										// Salesforce home dropdown
+
+	public static void sflogin() throws InterruptedException {// login method {
+		System.setProperty("webdriver.chrome.driver",
+				"C:\\\\Users\\\\avina\\\\Downloads\\\\driver\\\\chromedriver-win64\\\\chromedriver.exe");
+
+		// Set Chrome options
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--remote-allow-origins=*");
+		options.addArguments("--disable-web-security");
+		options.addArguments("--disable-gpu");
+		options.addArguments("--no-sandbox");
+		options.addArguments("--disable-dev-shm-usage");
+		// Initialize ChromeDriver with options
+		WebDriver driver = new ChromeDriver(options);
+		try {
+			TestRunner loginCrenditials = new TestRunner();
+			driver.get("https://avinashpvtltd-dev-ed.develop.lightning.force.com/");
+			driver.manage().window().maximize();
+			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+			driver.findElement(By.id("username")).click();
+			driver.findElement(By.id("username")).sendKeys(loginCrenditials.username);
+			driver.findElement(By.xpath("//input[@name='pw' and @id='password']")).sendKeys(loginCrenditials.password);
+			driver.findElement(By.xpath("//input[@class='button r4 wide primary' and @type='submit']")).click();
+			String login = "Setup";
+			String actualHome = driver.findElement(By.xpath("//span[@title='Setup']")).getText();
+			if (login.equals(actualHome)) {
+				System.out.println("User able to loggin successfylly to salesforce :- " + actualHome);
+			} else {
+				System.out.println("Not login ");
+
+			}
+			AppLauncher(driver);
+		} catch (StaleElementReferenceException e) {
+			System.out.println(e);
+
+		}
+
+	}
+
+	public static void AppLauncher(WebDriver driver) {
+		try {
+			driver.findElement(By.xpath("//button[@title='App Launcher']")).click();
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+			String AppName = "Sales Console";
+			driver.findElement(By.xpath("//input[@part='input']")).sendKeys(AppName);
+			WebElement App = wait
+					.until(ExpectedConditions.elementToBeClickable(By.xpath("//p[@class='slds-truncate']")));
+			App.click();
+			String appSelected = wait
+					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[@title='Sales Console']")))
+					.getText();
+			if (appSelected.equals(AppName)) {
+				System.out.println("User able to navigate to Sales console application as expected");
+			} else {
+				System.out.println("User unable able to navigate to Sales console application as expected");
+			}
+			ObjectNavigation(driver);
+		} catch (StaleElementReferenceException e) {
+			System.out.println(e);
+
+		}
+	}
+
+	public static void ObjectNavigation(WebDriver driver) {
+		try {
+			// Click the navigation menu button
+			driver.findElement(By.xpath("//button[@title='Show Navigation Menu']")).click();
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+			// Wait for the dropdown menu to be visible
+			List<WebElement> homeDrop = wait
+					.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//ul[@role='menu']/li")));
+
+			// Iterate through dropdown options
+			for (WebElement drop : homeDrop) {
+				System.out.println(drop.getText()); // Print menu item text
+
+				if (drop.getText().trim().equalsIgnoreCase(Object)) { // Ensure no extra spaces
+					wait.until(ExpectedConditions.elementToBeClickable(drop)).click();
+					break; // Exit loop after clicking
+				}
+			}
+			WebElement listView = wait
+					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h1[text()='" + Object + "']")));
+			if (listView.getText().equalsIgnoreCase(Object)) {
+				System.out.println(listView.getText() + "- list view page is displayed as expected");
+
+			} else {
+				System.out.println(Object + "- list view page is not displayed as expected");
+			}
+			accountCreation(driver);
+		} catch (StaleElementReferenceException e) {
+			System.out.println(e);
+
+		}
+		
+
+	}
+
+	// This method is used to create Account record in Salesforce.
+	public static void accountCreation(WebDriver driver) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[@title='New']"))).click();
+		
+		// Random method for selecting rating pick list value each time
+		Random random=new Random();
+		String[] Rating= {"Cold", "Warm", "Hot"};
+		String[] name= {"Ankush Sharma", "Nikhil Singh", "Ganesh Patel", "Likth Kumar"};
+		String dynamicName=name[random.nextInt(name.length)];
+		String dynmicRating=Rating[random.nextInt(Rating.length)];
+		System.out.println(dynmicRating);
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@aria-label='Rating']"))).click();
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[@title='"+dynmicRating +"']"))).click();
+		driver.findElement(By.xpath("//input[@name='Name']")).sendKeys(dynamicName);
+		driver.findElement(By.xpath("//input[@name='Email__c']")).sendKeys("avisf@test.com");
+		driver.findElement(By.xpath("//*[@name='SaveEdit']")).click();
+	}
+
+}
