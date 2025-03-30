@@ -1,27 +1,28 @@
+package Salesforce;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.*;
+import org.junit.Assert;
+import io.cucumber.datatable.DataTableType;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
+import java.util.Scanner;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import net.jodah.failsafe.internal.util.Assert;
+import io.cucumber.java.en.*;
 
-public class Salesforce {
-	static String Object = "Accounts"; // Note: this global static variable for navigating to any object in UI from
-										// Salesforce home dropdown
-
-	public static void sflogin() throws InterruptedException {// login method {
+public class Account {
+	WebDriver driver;
+	WebDriverWait wait;
+	Random random;
+	String name;
+	Account() {
 		System.setProperty("webdriver.chrome.driver",
 				"C:\\\\Users\\\\avina\\\\Downloads\\\\driver\\\\chromedriver-win64\\\\chromedriver.exe");
 
@@ -33,108 +34,169 @@ public class Salesforce {
 		options.addArguments("--no-sandbox");
 		options.addArguments("--disable-dev-shm-usage");
 		// Initialize ChromeDriver with options
-		WebDriver driver = new ChromeDriver(options);
-		try {
-			TestRunner loginCrenditials = new TestRunner();
-			driver.get("https://avinashpvtltd-dev-ed.develop.lightning.force.com/");
-			driver.manage().window().maximize();
-			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-			driver.findElement(By.id("username")).click();
-			driver.findElement(By.id("username")).sendKeys(loginCrenditials.username);
-			driver.findElement(By.xpath("//input[@name='pw' and @id='password']")).sendKeys(loginCrenditials.password);
-			driver.findElement(By.xpath("//input[@class='button r4 wide primary' and @type='submit']")).click();
-			String login = "Setup";
-			String actualHome = driver.findElement(By.xpath("//span[@title='Setup']")).getText();
-			if (login.equals(actualHome)) {
-				System.out.println("User able to loggin successfylly to salesforce :- " + actualHome);
-			} else {
-				System.out.println("Not login ");
-
-			}
-			AppLauncher(driver);
-		} catch (StaleElementReferenceException e) {
-			System.out.println(e);
-
-		}
-
+		this.driver = new ChromeDriver(options);
+		this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		this.random = new Random();
+		String[] nameList = { "Avinash Sharma", "Aaksh Sharma", "Likth Kumar", "Ajeet Sharma", "Sanjay Singh",
+				"Sarita Sharma" };
+		this.name = nameList[random.nextInt(nameList.length)];
 	}
 
-	public static void AppLauncher(WebDriver driver) {
-		try {
-			driver.findElement(By.xpath("//button[@title='App Launcher']")).click();
-			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-			String AppName = "Sales Console";
-			driver.findElement(By.xpath("//input[@part='input']")).sendKeys(AppName);
-			WebElement App = wait
-					.until(ExpectedConditions.elementToBeClickable(By.xpath("//p[@class='slds-truncate']")));
-			App.click();
-			String appSelected = wait
-					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[@title='Sales Console']")))
-					.getText();
-			if (appSelected.equals(AppName)) {
-				System.out.println("User able to navigate to Sales console application as expected");
-			} else {
-				System.out.println("User unable able to navigate to Sales console application as expected");
-			}
-			ObjectNavigation(driver);
-		} catch (StaleElementReferenceException e) {
-			System.out.println(e);
-
+	public void LoginSF(String username, String Pwd) {
+		driver.get("https://uat38-dev-ed.develop.lightning.force.com/");
+		driver.manage().window().maximize();
+		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+		driver.findElement(By.id("username")).click();
+		driver.findElement(By.id("username")).sendKeys(username);
+		driver.findElement(By.xpath("//input[@name='pw' and @id='password']")).sendKeys(Pwd);
+		driver.findElement(By.xpath("//input[@class='button r4 wide primary' and @type='submit']")).click();
+		String login = "Setup";
+		String actualHome = wait
+				.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[@title='Setup']"))).getText();
+		if (login.equals(actualHome)) {
+			System.out.println("User able to loggin successfylly to salesforce :- " + actualHome);
+		} else {
+			System.out.println("Not login ");
+			driver.quit();
 		}
 	}
 
-	public static void ObjectNavigation(WebDriver driver) {
+	public void AppLauncher(String appName) {
 		try {
-			// Click the navigation menu button
-			driver.findElement(By.xpath("//button[@title='Show Navigation Menu']")).click();
-			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-			// Wait for the dropdown menu to be visible
-			List<WebElement> homeDrop = wait
-					.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//ul[@role='menu']/li")));
 
-			// Iterate through dropdown options
-			for (WebElement drop : homeDrop) {
-				System.out.println(drop.getText()); // Print menu item text
+			WebElement AppLauncher = wait
+					.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@title='App Launcher']")));
+			AppLauncher.click();
+			WebElement AppSearch = driver.findElement(By.xpath("//input[@part='input' and @type='search']"));
+			AppSearch.sendKeys(appName);
+			List<WebElement> AppList = wait.until(
+					ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//div[@aria-label=\"Apps\"]")));
+			System.out.println("No of application populated : " + AppList.size());
+			for (WebElement list : AppList) {
+				String Name = list.getText().trim();
+				System.out.println("Value: " + Name);
+				{
+					if (Name.equalsIgnoreCase(appName)) {// this for App changing purpose
+						wait.until(ExpectedConditions.elementToBeClickable(list)).click();
+						break;
 
-				if (drop.getText().trim().equalsIgnoreCase(Object)) { // Ensure no extra spaces
-					wait.until(ExpectedConditions.elementToBeClickable(drop)).click();
-					break; // Exit loop after clicking
+					} else {// Else block is for object navigation
+						List<WebElement> ObjectItem = wait.until(ExpectedConditions
+								.visibilityOfAllElementsLocatedBy(By.xpath("//div[@aria-label='Items']")));
+						System.out.println("No of application populated : " + AppList.size());
+						for (WebElement object : ObjectItem) {
+							String objectName = object.getText().trim();
+							System.out.println("Value: " + objectName);
+							{
+								if (objectName.equalsIgnoreCase(appName)) {
+									wait.until(ExpectedConditions.elementToBeClickable(object)).click();
+									break;
+
+								}
+							}
+
+						}
+
+					}
 				}
 			}
-			WebElement listView = wait
-					.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h1[text()='" + Object + "']")));
-			if (listView.getText().equalsIgnoreCase(Object)) {
-				System.out.println(listView.getText() + "- list view page is displayed as expected");
-
+			String AccountText = wait
+					.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Recently Viewed']")))
+					.getText();
+			System.out.println(AccountText);
+			if (AccountText.equalsIgnoreCase("Recently Viewed")) {
+				System.out.println("User able to navigate to " + appName + " list view succesfully");
 			} else {
-				System.out.println(Object + "- list view page is not displayed as expected");
+				System.out.println("User not able to navigate" + appName + " list view");
 			}
-			accountCreation(driver);
-		} catch (StaleElementReferenceException e) {
-			System.out.println(e);
+
+		} catch (Exception e) {
+			System.err.println("Error while processing DataTable: " + e.getMessage());
+			e.printStackTrace(); // Print stack trace for debugging
 
 		}
-		
 
 	}
 
-	// This method is used to create Account record in Salesforce.
-	public static void accountCreation(WebDriver driver) {
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[@title='New']"))).click();
-		
-		// Random method for selecting rating pick list value each time
-		Random random=new Random();
-		String[] Rating= {"Cold", "Warm", "Hot"};
-		String[] name= {"Ankush Sharma", "Nikhil Singh", "Ganesh Patel", "Likth Kumar"};
-		String dynamicName=name[random.nextInt(name.length)];
-		String dynmicRating=Rating[random.nextInt(Rating.length)];
-		System.out.println(dynmicRating);
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@aria-label='Rating']"))).click();
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[@title='"+dynmicRating +"']"))).click();
-		driver.findElement(By.xpath("//input[@name='Name']")).sendKeys(dynamicName);
-		driver.findElement(By.xpath("//input[@name='Email__c']")).sendKeys("avisf@test.com");
+	public void accountCreation() {
+		WebElement newButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//div[@title='New']")));
+		newButton.click();
+
+		System.out.println(name);// Debugging the name
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@name='Name']"))).sendKeys(name);
+		String[] pick = { "Hot", "Cold", "Warm" };
+		String rating = pick[random.nextInt(pick.length)];
+		driver.findElement(By.xpath("//button[@aria-label='Rating']")).click();// rating fields handling
+		// validating the rating picklist value are present or not
+		List<WebElement> value = driver.findElements(By.xpath("//div[@aria-label='Rating']"));
+		System.out.println("No of value in picklist" + value.size());
+		for (WebElement valuepick : value) {
+			String rate = valuepick.getText();
+			for (String defaultValue : pick) {
+				if (rate.contains(defaultValue)) {
+					System.out.println("Picklist value is present :-" + defaultValue);
+				} else {
+					System.out.println("Picklist value is not present :- " + rate);
+				}
+			}
+			if(rate.contains(rating)) {
+				wait.until(ExpectedConditions.elementToBeClickable(valuepick)).click();
+			}
+			else {
+				driver.findElement(By.xpath("//span[@title='" + rating + "']")).click();//// rating fields handling
+				System.out.println("else part executed");
+			}
+		}
+		int phone = 345678854;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@name='Phone']"))).sendKeys("029454839");
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@name='Fax']"))).sendKeys("029454839");
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@name='AccountNumber']")))
+				.sendKeys("ACT-001");
+		driver.findElement(By.xpath("//button[@aria-label='Type']")).click();// Type Picklist fields handling
+		driver.findElement(By.xpath("//span[@title='" + "Prospect" + "']")).click();
+		driver.findElement(By.xpath("//button[@aria-label='Ownership']")).click();// Ownership picklist fields handling
+		driver.findElement(By.xpath("//span[@title='" + "Private" + "']")).click();
+		WebElement industry = driver.findElement(By.xpath("//button[@aria-label='Industry']"));// industry picklist
+		int ranNumb = random.nextInt(1000);
+		String noSpaceName = name.replace(" ", "");
+		String email = noSpaceName + ranNumb + "@sfavitest.com";
+		; // fields handling
+		((JavascriptExecutor) driver).executeScript("arguments[0].click();", industry);
+		driver.findElement(By.xpath("//span[@title='" + "Banking" + "']")).click();
+		WebElement emailconstruct = driver.findElement(By.xpath("//input[@name='Email__c']"));
+		JavascriptExecutor js = (JavascriptExecutor) driver;
+		js.executeScript("arguments[0].value = arguments[1];", emailconstruct, email);
 		driver.findElement(By.xpath("//*[@name='SaveEdit']")).click();
+		WebElement acountCreation = wait
+				.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@slot='primaryField']")));
+		String text = acountCreation.getText();
+		if (text.equalsIgnoreCase(name)) {
+			System.out.println("Account record is creadted as expected");
+
+		} else {
+			System.out.println("Account record is not creadted as expected");
+		}
+
+	}
+
+	public void accountInfromationValidation() {
+		driver.findElement(By.xpath("//li[@title='Details']")).click();
+		List<WebElement> accName = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
+				By.xpath("//records-record-layout-item[@field-label='Account Name']")));
+		for (WebElement extract : accName) {
+			String extractName = extract.getText().trim();
+			if (extractName.contains(name)) {
+				System.out.println("Account is Present in UI under Detail Tab : " + extractName);
+				break;
+		
+			} else {
+				System.out.println("No matching Account Name found in the UI.");
+			}			
+
+		}
+		
+		driver.quit();
 	}
 
 }
+
